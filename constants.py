@@ -1,5 +1,5 @@
-# token = "1859091224:AAEcYaxD1tW966EEbuYvIW3YIhlGbAjbyVI"
-token = "1814922843:AAEiwUHqfHjsP0xPN3Tz_kglfYI5RZKaXM8"
+token = "1859091224:AAEcYaxD1tW966EEbuYvIW3YIhlGbAjbyVI"
+# token = "1814922843:AAEiwUHqfHjsP0xPN3Tz_kglfYI5RZKaXM8"
 GREAT_CONST = "great"
 USUAL_CONST = "usual"
 
