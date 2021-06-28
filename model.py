@@ -2,16 +2,13 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 import PIL
+import torchvision
+import time
 
-from style_transfer import content_loss, extract_features, features_from_img, gram_matrix
-from style_transfer import preprocess, deprocess, rescale, rel_error, features_from_img
-from style_transfer import style_loss, content_loss, tv_loss
-
-
-#STYLES_FOLDER = '/content/drive/My Drive/{}/{}'.format(FOLDERNAME, 'styles')
+from style_transfer import extract_features, gram_matrix, preprocess, deprocess, style_loss, content_loss, tv_loss
 
 
-class Fire(nn.Module):
+class Block(nn.Module):
 
     def __init__(
         self,
@@ -20,7 +17,7 @@ class Fire(nn.Module):
         expand1x1_planes: int,
         expand3x3_planes: int
     ) -> None:
-        super(Fire, self).__init__()
+        super(Block, self).__init__()
         self.inplanes = inplanes
         self.squeeze = nn.Conv2d(inplanes, squeeze_planes, kernel_size=1)
         self.squeeze_activation = nn.ReLU(inplace=True)
@@ -51,19 +48,18 @@ class SqueezeNet(nn.Module):
             nn.Conv2d(3, 64, kernel_size=3, stride=2),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True),
-            Fire(64, 16, 64, 64),
-            Fire(128, 16, 64, 64),
+            Block(64, 16, 64, 64),
+            Block(128, 16, 64, 64),
             nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True),
-            Fire(128, 32, 128, 128),
-            Fire(256, 32, 128, 128),
+            Block(128, 32, 128, 128),
+            Block(256, 32, 128, 128),
             nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True),
-            Fire(256, 48, 192, 192),
-            Fire(384, 48, 192, 192),
-            Fire(384, 64, 256, 256),
-            Fire(512, 64, 256, 256),
+            Block(256, 48, 192, 192),
+            Block(384, 48, 192, 192),
+            Block(384, 64, 256, 256),
+            Block(512, 64, 256, 256),
         )
 
-        # Final convolution is initialized differently from the rest
         final_conv = nn.Conv2d(512, self.num_classes, kernel_size=1)
         self.classifier = nn.Sequential(
             nn.Dropout(p=0.5),
@@ -132,22 +128,12 @@ def style_transfer(cnn, dtype, content_image, style_image, image_size, style_siz
     decayed_lr = 0.1
     decay_lr_at = 180
 
-    # Note that we are optimizing the pixel values of the image by passing
-    # in the img Torch tensor, whose requires_grad flag is set to True
     optimizer = torch.optim.Adam([img], lr=initial_lr)
-
-    # f, axarr = plt.subplots(1, 2)
-    # axarr[0].axis('off')
-    # axarr[1].axis('off')
-    # axarr[0].set_title('Content Source Img.')
-    # axarr[1].set_title('Style Source Img.')
-    # axarr[0].imshow(deprocess(content_img.cpu()))
-    # axarr[1].imshow(deprocess(style_img.cpu()))
-    # plt.show()
-    # plt.figure()
 
     iterations = 300
     prev_num = 0
+
+    start = time.time()
 
     for t in range(iterations):
         if t < iterations - 10:
@@ -170,19 +156,18 @@ def style_transfer(cnn, dtype, content_image, style_image, image_size, style_siz
         optimizer.step()
         num = int(t * 100 / iterations )
         if prev_num != num:
-            progress(num)
+            time_now = time.time()
+            left = 0
+            if num == 0:
+                left = 60 * 20
+            elif num == 100:
+                left = 0
+            else:
+                left = int((iterations - t) / t * (time_now - start))
+            progress(num, time_now - start, left)
             prev_num = num
 
-        if (t + 1) % 100 == 0:
-            print('Iteration {}'.format(t))
-            # plt.axis('off')
-            # plt.imshow(deprocess(img.data.cpu()))
-            # plt.show()
-    # print('Iteration {}'.format(t))
-    # plt.axis('off')
-    # plt.imshow(deprocess(img.data.cpu()))
-    # plt.show()
-    progress(100)
+    progress(100, time.time() - start, 0)
     return deprocess(img.data.cpu())
 
 
@@ -191,9 +176,17 @@ def get_cnn():
     cnn = SqueezeNet().features
     cnn.type(dtype)
 
-    # We don't want to train the model any further, so we don't want PyTorch to waste computation
-    # computing gradients on parameters we're never going to update.
     for param in cnn.parameters():
         param.requires_grad = False
 
     return cnn, dtype
+
+
+def get_great_cnn():
+    dtype = torch.FloatTensor
+    great_cnn = torchvision.models.squeezenet1_1(pretrained=True).features
+    great_cnn.type(dtype)
+
+    for param in great_cnn.parameters():
+        param.requires_grad = False
+    return great_cnn
