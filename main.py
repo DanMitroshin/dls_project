@@ -88,7 +88,7 @@ def main():
                 style_filename = "style__" + str(user_id) + '.jpg'
                 with open(style_filename, 'wb') as file:
                     file.write(down_file)
-                message = bot.send_message(message.chat.id, get_string_progress(0))
+                message = bot.send_message(message.chat.id, get_string_progress(0, 60 * 20, 0))
                 mes_id = message.message_id
 
                 params1 = {
