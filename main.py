@@ -14,6 +14,7 @@ STYLES_FOLDER = ""
 
 
 def get_str_time(sec):
+
     h_int = int(sec / 3600)
     h = f"{str(h_int)} ч. " if h_int > 0 else ""
     min_int = int((sec % 3600) / 60)
@@ -24,10 +25,10 @@ def get_str_time(sec):
 
 def get_string_progress(num, used, left):
     green = int(num / 10)
-    return f"|> Идет обработка...\n" \
-           f"|> В ожидании: {get_str_time(used)}\n" \
-           f"|> Осталось ждать: {get_str_time(left)}\n" \
-           f"Завершено: {num}%\n[" + "✅" * green + "❌" * (10 - green) + "]"
+    return f"🌀 Идет обработка...\n" \
+           f"⏳ В ожидании: {get_str_time(used)}\n" \
+           f"⏱ Осталось ждать: {get_str_time(left)}\n\n" \
+           f"🎯 Завершено: {num}%\n" + "✅" * green + "❌" * (10 - green) + ""
 
 
 def get_key_bot_type_str(user_id):
