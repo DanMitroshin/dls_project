@@ -18,7 +18,7 @@ def get_str_time(sec):
     h = f"{str(h_int)} ч. " if h_int > 0 else ""
     min_int = int((sec % 3600) / 60)
     m = f"{str(min_int)} мин. "
-    s = f"{sec % 60} сек."
+    s = f"{str(int(sec % 60))} сек."
     return h + m + s
 
 
