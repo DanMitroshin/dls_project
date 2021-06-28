@@ -169,7 +169,7 @@ def style_transfer(cnn, dtype, content_image, style_image, image_size, style_siz
             optimizer = torch.optim.Adam([img], lr=decayed_lr)
         optimizer.step()
         num = int(t * 100 / iterations )
-        if num % 5 == 0 and prev_num != num:
+        if prev_num != num:
             progress(num)
             prev_num = num
 
